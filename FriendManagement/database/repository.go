@@ -47,7 +47,7 @@ func (db Database) CreateUser(a *models.FConnectionrequest) error {
 }
 
 //GET all User in Friend Email
-func (db Database) getAllUser() ([]models.User, error) {
+func (db Database) GetAllUser() ([]models.User, error) {
 	allUser := []models.User{}
 	query := `SELECT * from user_profile;`
 	row, err := db.Conn.Query(query)
@@ -67,7 +67,7 @@ func (db Database) getAllUser() ([]models.User, error) {
 }
 
 //execute to get all Subscriber
-func (db Database) getAllSubscriber(requester string) (*models.User, error) {
+func (db Database) GetAllSubscriber(requester string) (*models.User, error) {
 	target := &models.User{}
 	query := `SELECT sender FROM subcription s WHERE reciever = $1;`
 	row, err := db.Conn.Query(query, requester)
@@ -86,7 +86,7 @@ func (db Database) getAllSubscriber(requester string) (*models.User, error) {
 }
 
 //execute to Get all Email has been blocked
-func (db Database) getAllBlockEmail(requestor string) (*models.User, error) {
+func (db Database) GetAllBlockEmail(requestor string) (*models.User, error) {
 	targetLst := &models.User{}
 	query := `SELECT requestor FROM block_user WHERE target =$1;`
 	row, err := db.Conn.Query(query, requestor)
@@ -105,7 +105,7 @@ func (db Database) getAllBlockEmail(requestor string) (*models.User, error) {
 }
 
 //execute to GET all Target(Email is blocked)
-func (db Database) getTargetBlockByRequest(requestor, target string) (int, error) {
+func (db Database) GetTargetBlockByRequest(requestor, target string) (int, error) {
 	var countBlocked int
 	query := `SELECT COUNT(*) FROM block_user WHERE requestor= $1 AND target= $2;`
 	row := db.Conn.QueryRow(query, requestor, target)

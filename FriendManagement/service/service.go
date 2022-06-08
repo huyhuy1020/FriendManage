@@ -1,10 +1,11 @@
 package service
 
 import (
-	_ "Assignment/common"
+	"Assignment/common"
 	"Assignment/database"
 	"Assignment/models"
 	"log"
+	"strings"
 )
 
 type UserService interface {
@@ -106,7 +107,98 @@ func (st Storage) GetCommonFriendList(a *models.CommonFriendRequest) (*models.FL
 	return response, nil
 }
 
+// CreateSubscribe to get email by users. we check if subscribe is existed or not
 func (st Storage) CreateSubscribe(a *models.SubscriptionRequest) (*models.ReplyResult, error) {
 	response := &models.ReplyResult{}
+	countUser, err := st.Db.GetUserByRequest(a.Requester, a.Target)
+	if err != nil {
+		return response, err
+	}
+	if countUser <= 1 {
+		log.Printf("Email is not enough for subcribbing")
+		return response, err
+	}
+	countSubscribe, err := st.Db.GetRecieverSubscribeBySender(a.Requester, a.Target)
+	if err != nil {
+		return response, err
+	}
+	if countSubscribe == 1 {
+		log.Printf("%s Added %s to subcribe", a.Target, a.Requester)
+		return response, err
+	}
+	if err := st.Db.CreateSubcribeFriendByRequestorAndTarget(a.Target, a.Requester); err != nil {
+		return response, err
+	}
+	response.Success = true
+	return response, err
+}
 
+// CreateBlockFriend setting up and checking conditions to block friends
+func (st Storage) CreateBlockFriend(a *models.BlockRequest) (*models.ReplyResult, error) {
+	response := &models.ReplyResult{}
+	countUser, err := st.Db.GetUserByRequest(a.Requester, a.Target)
+	if err != nil {
+		return response, err
+	}
+	if countUser <= 1 {
+		log.Printf("Email is not enough to get block")
+		return response, err
+	}
+	countBlocked, err := st.Db.GetTargetBlockByRequest(a.Requester, a.Target)
+	if err != nil {
+		return response, err
+	}
+	if countBlocked == 1 {
+		log.Printf("can't block, because %s block %s ", a.Requester, a.Target)
+		return response, err
+	}
+	if err := st.Db.CreateBlockFriendByRequestorAndTarget(a.Target, a.Requester); err != nil {
+		return response, err
+	}
+	response.Success = true
+	return response, err
+}
+
+// CreateUpdateReceive to update data when they blocked and added friends
+func (st Storage) CreateUpdateReceive(a *models.UpdateEmailRequest) (*models.RespondEmail, error) {
+	response := &models.RespondEmail{}
+	countUser, err := st.Db.GetUserByEmail(a.Sender)
+	if err != nil {
+		return response, err
+	}
+	if countUser == 0 {
+		log.Printf("Email is not existing")
+		return response, err
+	}
+	blockLst, err := st.Db.GetAllBlockEmail(a.Sender)
+	if err != nil {
+		return response, err
+	}
+	allUser, err := st.Db.GetAllUser()
+	if err != nil {
+		return response, err
+	}
+	friendlst, err := st.Db.GetFriendListByEmail(a.Sender)
+	if err != nil {
+		return response, err
+	}
+	subscribeLst, err := st.Db.GetAllSubscriber(a.Sender)
+	if err != nil {
+		return nil, err
+	}
+	list := []string{}
+	for _, user := range allUser {
+		boolBlock := common.CheckListExisting(blockLst.Blocked, user.Email)
+		if !boolBlock {
+			boolFriend := common.CheckListExisting(friendlst.Friends, user.Email)
+			boolSubscribe := common.CheckListExisting(subscribeLst.Subscription, user.Email)
+			boolMention := strings.Contains(a.Text, user.Email)
+			if boolFriend || boolSubscribe || boolMention {
+				list = append(list, user.Email)
+			}
+		}
+	}
+	response.Success = true
+	response.Recipients = list
+	return response, nil
 }
