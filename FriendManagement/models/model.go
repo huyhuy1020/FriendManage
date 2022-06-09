@@ -30,8 +30,19 @@ type FListRequest struct {
 	Email string `json:email`
 }
 
+func (email *FListRequest) Bind(r *http.Request) error {
+	//TODO implement me
+	if email.Email == "" {
+		log.Print("email is a required field ")
+		return fmt.Errorf("email is required field")
+	}
+	return nil
+}
+
 type EmailRequest struct {
-	Email string `json:email`
+	Email  string `json:email`
+	Sender string
+	Text   string
 }
 
 type CommonFriendRequest struct {
@@ -49,9 +60,38 @@ type SubscriptionRequest struct {
 	Target    string `json:target`
 }
 
+func (s SubscriptionRequest) Bind(r *http.Request) error {
+	//TODO implement me
+	requester := s.Requester
+	target := s.Target
+	if requester == target {
+		log.Print("can't subscribe by myself")
+		return fmt.Errorf("can't subscribe by myself")
+	}
+	if requester == "" || target == "" {
+		return fmt.Errorf("email is a required field")
+	}
+	return nil
+}
+
 type BlockRequest struct {
 	Requester string `json: requester`
 	Target    string `json: target`
+}
+
+func (b BlockRequest) Bind(r *http.Request) error {
+	//TODO implement me
+	panic("implement me")
+	requestor := b.Requester
+	target := b.Target
+	if requestor == "" || target == "" {
+		return fmt.Errorf("email is a required field ")
+	}
+	if requestor == target {
+		log.Print("cannot block itself")
+		return fmt.Errorf("cannot block itself")
+	}
+	return nil
 }
 
 type UpdateEmailRequest struct {
@@ -88,14 +128,14 @@ func (email *EmailRequest) Bind(r *http.Request) error {
 }
 
 //check for non-email and target
-func (sub *SubscriptionRequest) Bind(r *http.Request) error {
-	requestor := sub.Requester
-	target := sub.Target
-	if requestor == "" || target == "" {
+func (friend *CommonFriendRequest) Bind(r *http.Request) error {
+	user1 := friend.Friends[0]
+	user2 := friend.Friends[1]
+	if user1 == "" || user2 == "" {
 		log.Print("email cannot empty.")
 		return fmt.Errorf("email cannot empty.")
 	}
-	if requestor == target {
+	if user1 == user2 {
 		log.Print("can't not subcribe by itself")
 		return fmt.Errorf("can't not subcribe by itself")
 	}

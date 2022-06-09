@@ -34,8 +34,20 @@ func (db Database) CreateBlockFriendByRequestorAndTarget(requestor, target strin
 	return nil
 }
 
+// add friend connection between 2 emails 1 and 2
+func (db Database) CreateUser(a *models.FConnectionrequest) error {
+	firstemail := a.Friends[0]
+	secondemail := a.Friends[1]
+	query := `INSERT INTO friend (the_first_user,the_second_user) VALUES ($1,$2);`
+	_, err := db.Conn.Exec(query, firstemail, secondemail)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 //GET all User in Friend Email
-func (db Database) getAllUser() ([]models.User, error) {
+func (db Database) GetAllUser() ([]models.User, error) {
 	allUser := []models.User{}
 	query := `SELECT * from user_profile;`
 	row, err := db.Conn.Query(query)
@@ -55,7 +67,7 @@ func (db Database) getAllUser() ([]models.User, error) {
 }
 
 //execute to get all Subscriber
-func (db Database) getAllSubscriber(requester string) (*models.User, error) {
+func (db Database) GetAllSubscriber(requester string) (*models.User, error) {
 	target := &models.User{}
 	query := `SELECT sender FROM subcription s WHERE reciever = $1;`
 	row, err := db.Conn.Query(query, requester)
@@ -74,7 +86,7 @@ func (db Database) getAllSubscriber(requester string) (*models.User, error) {
 }
 
 //execute to Get all Email has been blocked
-func (db Database) getAllBlockEmail(requestor string) (*models.User, error) {
+func (db Database) GetAllBlockEmail(requestor string) (*models.User, error) {
 	targetLst := &models.User{}
 	query := `SELECT requestor FROM block_user WHERE target =$1;`
 	row, err := db.Conn.Query(query, requestor)
@@ -93,7 +105,7 @@ func (db Database) getAllBlockEmail(requestor string) (*models.User, error) {
 }
 
 //execute to GET all Target(Email is blocked)
-func (db Database) getTargetBlockByRequest(requestor, target string) (int, error) {
+func (db Database) GetTargetBlockByRequest(requestor, target string) (int, error) {
 	var countBlocked int
 	query := `SELECT COUNT(*) FROM block_user WHERE requestor= $1 AND target= $2;`
 	row := db.Conn.QueryRow(query, requestor, target)
@@ -144,5 +156,49 @@ func (db Database) GetBlockListByRequest(request *models.FConnectionrequest) (in
 	return countEmailBlocked, nil
 }
 
-//exce
-func (db Database) Get
+//execute to GET USER emails by Requester
+func (db Database) GetUserByRequest(firstEmail, secondEmail string) (int, error) {
+	var countUser int
+	query := `SELECT COUNT(*) FROM user_profile 
+			WHERE email in($1,$2);`
+	row := db.Conn.QueryRow(query, firstEmail, secondEmail)
+	err := row.Scan(&countUser)
+	if err != nil {
+		return countUser, err
+	}
+	return countUser, nil
+}
+
+//execute to GET User by Emai;
+func (db Database) GetUserByEmail(email string) (int, error) {
+	var countUserEmail int
+	query := `SELECT COUNT(*) FROM user_profile WHERE email = $1;`
+	row := db.Conn.QueryRow(query, email)
+	err := row.Scan(&countUserEmail)
+	if err != nil {
+		return countUserEmail, err
+	}
+	return countUserEmail, nil
+}
+
+//execute to GET all Friend Email
+func (db Database) GetFriendListByEmail(email string) (*models.User, error) {
+	var friendLst = &models.User{}
+	query := `SELECT the_second_user, id FROM friend WHERE the_first_user =$1 UNION 
+			SELECT the_first_user, id FROM friend WHERE the_second_user = $1
+			ORDER BY id;`
+	row, err := db.Conn.Query(query, email)
+	if err != nil {
+		return friendLst, err
+	}
+	var id int
+	for row.Next() {
+		var item models.User
+		err := row.Scan(&item.Email, &id)
+		if err != nil {
+			return friendLst, err
+		}
+		friendLst.Friends = append(friendLst.Friends, item.Email)
+	}
+	return friendLst, nil
+}
