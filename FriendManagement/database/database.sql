@@ -25,7 +25,7 @@ CREATE TABLE block_user (
 
 --Define Subcription to update a subcribe from email
 CREATE TABLE subcription(
-    id int NOT NULL GENERATED ALWAYS AS INDENTITY,
+    id int NOT NULL GENERATED ALWAYS AS IDENTITY,
     sender VARCHAR(100) NULL,
     reciever VARCHAR(100) NULL,
     CONSTRAINT PK_Subcription PRIMARY KEY(id),

@@ -19,7 +19,7 @@ type Database struct {
 	Conn *sql.DB
 }
 
-func Initialize(username, password, database string) (Database, error) {
+func Initialize() (Database, error) {
 	db := Database{}
 	daba := fmt.Sprintf("host =%s port =%s user =%s password =%s dbname =%s sslmode=disable",
 		HOST, PORT, username, password, database)

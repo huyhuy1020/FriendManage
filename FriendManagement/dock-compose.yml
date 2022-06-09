@@ -1,6 +1,7 @@
 version: "3.7"
 services:
   database:
+    container_name: postgres
     image: postgres:latest
     restart: always
     env_file:
@@ -8,23 +9,24 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./database.sql:/docker-entrypoint-databasedb.d/database.sql
+      - ./database.sql:/docker-entrypoint-database.d/database.sql
     networks:
       - fm-network
 
-  backend:
-  container_name: friendmanagement-api
-  restart: unless-stopped
-  build: 
-    context: .
-    dockerfile: Dockerfile
-    ports: 
-        - "8080:8080"
-    depend on: 
-        - postgredb
-    networks:
-        - fm-network
 
-  network: 
-    fm-network:
-      driver: bridge
+  backend:
+    container_name: friend_management_api
+    restart: unless-stopped
+    build:
+      context:  .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgredb
+    networks:
+      - fm-network
+
+networks:
+  fm-network:
+    driver: bridge

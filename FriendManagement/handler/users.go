@@ -12,7 +12,10 @@ func createUser(service service.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &models.FListRequest{}
 		if err := render.Bind(r, req); err != nil {
-			render.Render(w, r, ErrorBadRequest)
+			err := render.Render(w, r, ErrorBadRequest)
+			if err != nil {
+				return
+			}
 			return
 		}
 		response, err := service.CreateUser(req)

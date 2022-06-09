@@ -11,17 +11,6 @@ import (
 
 var dbIns database.Database
 
-//Create router(New Handler)
-
-func NewHandler(db database.Database) *chi.Mux {
-	router := chi.NewRouter()
-	dbIns = db
-	router.MethodNotAllowed(MethodNotAllowed)
-	router.NotFound(notfoundhandler)
-	router.Route("/api", users)
-	return router
-}
-
 func users(router chi.Router) {
 	st := service.Storage{Db: dbIns}
 	router.Post("/register", createUser(st))
@@ -36,11 +25,27 @@ func users(router chi.Router) {
 func notfoundhandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(400)
-	render.Render(w, r, ErrorNotFound)
+	err := render.Render(w, r, ErrorNotFound)
+	if err != nil {
+		return
+	}
 }
 
 func MethodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(405)
-	render.Render(w, r, ErrorMethodNotAllowed)
+	err := render.Render(w, r, ErrorMethodNotAllowed)
+	if err != nil {
+		return
+	}
+}
+
+//Create router(New Handler)
+func NewHandler(db database.Database) *chi.Mux {
+	router := chi.NewRouter()
+	dbIns = db
+	router.MethodNotAllowed(MethodNotAllowed)
+	router.NotFound(notfoundhandler)
+	router.Route("/api", users)
+	return router
 }

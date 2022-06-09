@@ -186,7 +186,7 @@ func (st Storage) CreateUpdateReceive(a *models.EmailRequest) (*models.RespondEm
 	if err != nil {
 		return nil, err
 	}
-	list := []string{}
+	var list []string
 	for _, user := range allUser {
 		boolBlock := common.CheckListExisting(blockLst.Blocked, user.Email)
 		if !boolBlock {
